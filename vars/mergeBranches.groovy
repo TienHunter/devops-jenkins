@@ -28,7 +28,9 @@ def call() {
                                     dir('fe') {
                                         script {
                                             echo "[FE] Bắt đầu merge code từ ${Constants.SOURCE_BRANCH} sang ${Constants.TARGET_BRANCH}"
-                                            utilitiesBuild.mergeCode(Constants.SOURCE_BRANCH, Constants.TARGET_BRANCH)
+                                            withCredentials([usernamePassword(credentialsId: Constants.GIT_CREDENTIALS, usernameVariable: 'GIT_USERNAME', passwordVariable: 'GIT_PASSWORD')]) {
+                                                utilitiesBuild.mergeCode(Constants.SOURCE_BRANCH, Constants.TARGET_BRANCH)
+                                            }
                                             echo "[FE] Đã hoàn thành merge code."
                                         }
                                     }
