@@ -1,5 +1,5 @@
 def call(String fromBranch, String toBranch) {
-    def utilitiesBuild = new src.Utilities(this)
+    def utilitiesBuild = new Utilities(this)
     pipeline {
         agent { label 'agent1' }
         stages {
