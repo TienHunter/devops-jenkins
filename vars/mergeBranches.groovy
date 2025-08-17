@@ -1,5 +1,9 @@
 def call() {
     def utilitiesBuild = new Utilities(this)
+    echo "[CONFIG] REPO_URL: ${Constants.REPO_URL}"
+    echo "[CONFIG] SOURCE_BRANCH: ${Constants.SOURCE_BRANCH}"
+    echo "[CONFIG] TARGET_BRANCH: ${Constants.TARGET_BRANCH}"
+    echo "[CONFIG] GIT_CREDENTIALS: ${Constants.GIT_CREDENTIALS}"
     pipeline {
         agent { label 'agent1' }
         stages {
@@ -21,8 +25,12 @@ def call() {
                             }
                             stage('Merge') {
                                 steps {
-                                    script {
-                                        utilitiesBuild.mergeCode(Constants.SOURCE_BRANCH, Constants.TARGET_BRANCH)
+                                    dir('fe') {
+                                        script {
+                                            echo "[FE] Bắt đầu merge code từ ${Constants.SOURCE_BRANCH} sang ${Constants.TARGET_BRANCH}"
+                                            utilitiesBuild.mergeCode(Constants.SOURCE_BRANCH, Constants.TARGET_BRANCH)
+                                            echo "[FE] Đã hoàn thành merge code."
+                                        }
                                     }
                                 }
                             }
