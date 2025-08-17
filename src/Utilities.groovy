@@ -18,7 +18,7 @@ class Utilities implements Serializable {
 				git checkout ${toBranch}
 			fi
 			git merge origin/${fromBranch}
-			git push origin ${toBranch}
+			git push https://$GIT_USERNAME:$GIT_PASSWORD@github.com/TienHunter/workfms-fe.git ${toBranch}
 		"""
 	}
 }
