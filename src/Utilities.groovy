@@ -8,6 +8,8 @@ class Utilities implements Serializable {
 
 	def mergeCode(String fromBranch, String toBranch) {
 		steps.echo "[Utilities] Merge ${fromBranch} vào ${toBranch}"
+		def username = steps.env.GIT_USERNAME
+		def password = steps.env.GIT_PASSWORD
 		steps.sh """
 			git config user.email 'tienkbtnhp@gmail.com'
 			git config user.name 'TienHunter'
@@ -18,7 +20,8 @@ class Utilities implements Serializable {
 				git checkout ${toBranch}
 			fi
 			git merge origin/${fromBranch}
-			git push https://$GIT_USERNAME:$GIT_PASSWORD@github.com/TienHunter/workfms-fe.git ${toBranch}
+			git remote set-url origin https://${username}:${password}@github.com/TienHunter/workfms-fe.git
+			git push origin ${toBranch}
 		"""
 	}
 }
