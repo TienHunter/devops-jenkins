@@ -11,7 +11,12 @@ class Utilities implements Serializable {
 		steps.sh """
 			git config user.email 'tienkbtnhp@gmail.com'
 			git config user.name 'TienHunter'
-			git checkout ${toBranch}
+			# Tạo nhánh nếu chưa tồn tại
+			if ! git show-ref --verify --quiet refs/heads/${toBranch}; then
+				git checkout -b ${toBranch}
+			else
+				git checkout ${toBranch}
+			fi
 			git merge origin/${fromBranch}
 			git push origin ${toBranch}
 		"""
