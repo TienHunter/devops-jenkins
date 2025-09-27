@@ -1,7 +1,7 @@
 def call() {
    // def utilitiesBuild = new Utilities(this)
    pipeline {
-      agent any
+      agent { label 'agent1' }
 
       stages {
          stage('Checkout') {
