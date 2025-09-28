@@ -36,11 +36,11 @@ def call() {
                   steps {
                      script {
                         withCredentials([usernamePassword(credentialsId: Constants.DOCKERHUB_CREDENTIALS, usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
-                           sh """
-                              docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_PASS}
-                              docker build -t ${DOCKER_IMAGE}:${env.IMAGE_TAG} .
-                              docker push ${Constants.DOCKER_IMAGE_fe}:${env.IMAGE_TAG}
-                           """
+                              sh """
+                                 docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_PASS}
+                                 docker build -t ${DOCKER_IMAGE}:${env.IMAGE_TAG} -f DockerBuild/Dockerfile .
+                                 docker push ${Constants.DOCKER_IMAGE_fe}:${env.IMAGE_TAG}
+                              """
                         }
                      }
                   }
