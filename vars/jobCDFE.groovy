@@ -1,71 +1,90 @@
 def call() {
-   // def utilitiesBuild = new Utilities(this)
-   pipeline {
-      agent { label 'agent1' }
+    pipeline {
+        agent { label 'agent1' }
 
-      stages {
-         stage('Check Branch') {
-            steps {
-               script {
-                  def currentBranch = sh(script: 'git rev-parse --abbrev-ref HEAD', returnStdout: true).trim()
-                  echo "[INFO] Current branch: ${currentBranch}"
-                  if (currentBranch != 'local') {
-                     error "Current branch is '${currentBranch}', pipeline logic will not be executed."
-                  }
-               }
+        stages {
+            stage('Checkout') {
+                when {
+                    expression {
+                        // Chỉ chạy nếu branch là "local"
+                        def currentBranch = env.GIT_BRANCH?.replaceFirst(/^origin\//, '') ?: sh(
+                            script: 'git rev-parse --abbrev-ref HEAD',
+                            returnStdout: true
+                        ).trim()
+                        echo "[INFO] Current branch: ${currentBranch}"
+                        return currentBranch == 'local'
+                    }
+                }
+                steps {
+                    checkout scm
+                }
             }
-         }
 
-         stage('Checkout') {
-            steps {
-               checkout scm
+            stage('Get Latest Tag') {
+                when {
+                    expression { env.GIT_BRANCH?.endsWith('local') }
+                }
+                steps {
+                    script {
+                        sh 'git fetch --tags'
+
+                        def lastTag = sh(
+                            script: 'git describe --tags `git rev-list --tags --max-count=1` || echo 0.0.0',
+                            returnStdout: true
+                        ).trim()
+
+                        def (major, minor, patch) = lastTag.tokenize('.')*.toInteger()
+                        def newTag = "${major}.${minor}.${patch + 1}"
+
+                        echo "Last tag: ${lastTag}"
+                        echo "New tag: ${newTag}"
+
+                        env.IMAGE_TAG = newTag
+                    }
+                }
             }
-         }
 
-         stage('Get Latest Tag') {
-            steps {
-               script {
-                  // Lấy tag mới nhất từ repo
-                  sh 'git fetch --tags'
-                  def lastTag = sh(script: 'git describe --tags `git rev-list --tags --max-count=1` || echo 0.0.0', returnStdout: true).trim()
+            stage('Build & Push Docker Image') {
+                when {
+                    expression { env.GIT_BRANCH?.endsWith('local') }
+                }
+                steps {
+                    script {
+                        withCredentials([usernamePassword(
+                            credentialsId: Constants.DOCKERHUB_CREDENTIALS,
+                            usernameVariable: 'DOCKERHUB_USER',
+                            passwordVariable: 'DOCKERHUB_PASS'
+                        )]) {
+                            sh """
+                                echo "[INFO] Docker login..."
+                                echo ${DOCKERHUB_PASS} | docker login -u ${DOCKERHUB_USER} --password-stdin
 
-                  // Tăng version (ví dụ tăng patch)
-                  def (major, minor, patch) = lastTag.tokenize('.')
-                  def newTag = "${major}.${minor}.${(patch as int) + 1}"
+                                echo "[INFO] Building image ${Constants.DOCKER_IMAGE}:${env.IMAGE_TAG}"
+                                docker build -t ${Constants.DOCKER_IMAGE}:${env.IMAGE_TAG} -f DockerBuild/Dockerfile .
 
-                  echo "Last tag: ${lastTag}"
-                  echo "New tag: ${newTag}"
-                  env.IMAGE_TAG = newTag
-               }
+                                echo "[INFO] Pushing image ${Constants.DOCKER_IMAGE}:${env.IMAGE_TAG}"
+                                docker push ${Constants.DOCKER_IMAGE}:${env.IMAGE_TAG}
+                            """
+                        }
+                    }
+                }
             }
-         }
 
-         stage('Build Docker Image') {
-            steps {
-               script {
-                  withCredentials([usernamePassword(credentialsId: Constants.DOCKERHUB_CREDENTIALS, usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
-                     sh """
-                        docker login -u ${DOCKERHUB_USER} -p ${DOCKERHUB_PASS}
-                        docker build -t ${DOCKER_IMAGE}:${env.IMAGE_TAG} -f DockerBuild/Dockerfile .
-                        docker push ${Constants.DOCKER_IMAGE_fe}:${env.IMAGE_TAG}
-                     """
-                  }
-               }
+            stage('Update Git Tag') {
+                when {
+                    expression { env.GIT_BRANCH?.endsWith('local') }
+                }
+                steps {
+                    script {
+                        sh """
+                            git config user.email 'tienkbtnhp@gmail.com'
+                            git config user.name 'TienHunter'
+                            git tag ${env.IMAGE_TAG}
+                            git push origin ${env.IMAGE_TAG}
+                        """
+                    }
+                }
             }
-         }
-
-         stage('Update Git Tag') {
-            steps {
-               script {
-                  sh """
-                        git config user.email 'tienkbtnhp@gmail.com'
-                        git config user.name 'TienHunter'
-                        git tag ${env.IMAGE_TAG}
-                        git push origin ${env.IMAGE_TAG}
-                    """
-               }
-            }
-         }
-      }
-   }
+        }
+    }
 }
