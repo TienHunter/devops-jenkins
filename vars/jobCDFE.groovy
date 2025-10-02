@@ -75,12 +75,12 @@ def call() {
                             usernameVariable: 'GIT_USER',
                             passwordVariable: 'GIT_PASS'
                         )]) {
-                            sh '''
+                            sh """
                                 git config user.email 'tienkbtnhp@gmail.com'
                                 git config user.name 'TienHunter'
                                 git tag ${env.IMAGE_TAG}
                                 git push origin ${env.IMAGE_TAG}
-                            '''
+                            """
                         }
                     }
                 }
