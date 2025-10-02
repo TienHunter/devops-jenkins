@@ -6,7 +6,7 @@ def call() {
             stage('Checkout') {
                 steps {
                     withCredentials([usernamePassword(
-                        credentialsId: Constants.GITHUB_CREDENTIALS,
+                        credentialsId: Constants.GIT_CREDENTIALS,
                         usernameVariable: 'GIT_USER',
                         passwordVariable: 'GIT_PASS'
                     )]) {
