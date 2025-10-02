@@ -37,7 +37,10 @@ def call() {
                             returnStdout: true
                         ).trim()
 
-                        def (major, minor, patch) = lastTag.tokenize('.')*.toInteger()
+                        def tagParts = lastTag.tokenize('.')
+                        def major = tagParts.size() > 0 ? tagParts[0].toInteger() : 0
+                        def minor = tagParts.size() > 1 ? tagParts[1].toInteger() : 0
+                        def patch = tagParts.size() > 2 ? tagParts[2].toInteger() : 0
                         def newTag = "${major}.${minor}.${patch + 1}"
 
                         echo "Last tag: ${lastTag}"
