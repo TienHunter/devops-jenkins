@@ -21,7 +21,6 @@ def call() {
                               git fetch origin
                               git checkout local || git checkout -b local origin/local
                               git pull origin local
-                            fi
                         '''
                     }
                 }
@@ -63,11 +62,11 @@ def call() {
                                 echo "[INFO] Docker login..."
                                 echo ${DOCKERHUB_PASS} | docker login -u ${DOCKERHUB_USER} --password-stdin
 
-                                echo "[INFO] Building image ${Constants.DOCKER_IMAGE}:${env.IMAGE_TAG}"
-                                docker build -t ${Constants.DOCKER_IMAGE}:${env.IMAGE_TAG} -f DockerBuild/Dockerfile .
+                                echo "[INFO] Building image ${Constants.DOCKER_IMAGE_FE}:${env.IMAGE_TAG}"
+                                docker build -t ${Constants.DOCKER_IMAGE_FE}:${env.IMAGE_TAG} -f DockerBuild/Dockerfile .
 
-                                echo "[INFO] Pushing image ${Constants.DOCKER_IMAGE}:${env.IMAGE_TAG}"
-                                docker push ${Constants.DOCKER_IMAGE}:${env.IMAGE_TAG}
+                                echo "[INFO] Pushing image ${Constants.DOCKER_IMAGE_FE}:${env.IMAGE_TAG}"
+                                docker push ${Constants.DOCKER_IMAGE_FE}:${env.IMAGE_TAG}
                             """
                         }
                     }
@@ -76,13 +75,17 @@ def call() {
 
             stage('Update Git Tag') {
                 steps {
-                    script {
-                        sh """
+                     withCredentials([usernamePassword(
+                        credentialsId: Constants.GIT_CREDENTIALS,
+                        usernameVariable: 'GIT_USER',
+                        passwordVariable: 'GIT_PASS'
+                    )]) {
+                        sh '''
                             git config user.email 'tienkbtnhp@gmail.com'
                             git config user.name 'TienHunter'
                             git tag ${env.IMAGE_TAG}
                             git push origin ${env.IMAGE_TAG}
-                        """
+                        '''
                     }
                 }
             }
