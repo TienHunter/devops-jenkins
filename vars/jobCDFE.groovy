@@ -11,25 +11,7 @@ def call() {
             stage('Checkout') {
                 steps {
                     dir('fe') {
-                        withCredentials([usernamePassword(
-                            credentialsId: Constants.GIT_CREDENTIALS,
-                            usernameVariable: 'GIT_USER',
-                            passwordVariable: 'GIT_PASS'
-                        )]) {
-                            sh '''
-                                echo "[INFO] GitHub login..."
-                                git config --global credential.helper store
-                                git config --global user.email "tienkbtnhp@gmail.com"
-                                git config --global user.name "TienHunter"
-                                if [ ! -d .git ]; then
-                                  git clone https://$GIT_USER:$GIT_PASS@github.com/TienHunter/devops-jenkins.git .
-                                else
-                                  git fetch origin
-                                  git checkout local || git checkout -b local origin/local
-                                  git pull origin local
-                                fi
-                            '''
-                        }
+                        git branch: Constants.TARGET_BRANCH, url: Constants.REPO_URL, credentialsId: Constants.GIT_CREDENTIALS
                     }
                 }
             }
