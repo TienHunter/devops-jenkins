@@ -4,26 +4,30 @@ def call() {
 
         stages {
             stage('Checkout') {
-                when {
-                    expression {
-                        // Chỉ chạy nếu branch là "local"
-                        def currentBranch = env.GIT_BRANCH?.replaceFirst(/^origin\//, '') ?: sh(
-                            script: 'git rev-parse --abbrev-ref HEAD',
-                            returnStdout: true
-                        ).trim()
-                        echo "[INFO] Current branch: ${currentBranch}"
-                        return currentBranch == 'local'
-                    }
-                }
                 steps {
-                    checkout scm
+                    withCredentials([usernamePassword(
+                        credentialsId: Constants.GITHUB_CREDENTIALS,
+                        usernameVariable: 'GIT_USER',
+                        passwordVariable: 'GIT_PASS'
+                    )]) {
+                        sh '''
+                            echo "[INFO] GitHub login..."
+                            git config --global credential.helper store
+                            git config --global user.email "tienkbtnhp@gmail.com"
+                            git config --global user.name "TienHunter"
+                            if [ ! -d .git ]; then
+                              git clone https://$GIT_USER:$GIT_PASS@github.com/TienHunter/devops-jenkins.git .
+                            else
+                              git fetch origin
+                              git checkout local || git checkout -b local origin/local
+                              git pull origin local
+                            fi
+                        '''
+                    }
                 }
             }
 
             stage('Get Latest Tag') {
-                when {
-                    expression { env.GIT_BRANCH?.endsWith('local') }
-                }
                 steps {
                     script {
                         sh 'git fetch --tags'
@@ -45,9 +49,6 @@ def call() {
             }
 
             stage('Build & Push Docker Image') {
-                when {
-                    expression { env.GIT_BRANCH?.endsWith('local') }
-                }
                 steps {
                     script {
                         withCredentials([usernamePassword(
@@ -71,9 +72,6 @@ def call() {
             }
 
             stage('Update Git Tag') {
-                when {
-                    expression { env.GIT_BRANCH?.endsWith('local') }
-                }
                 steps {
                     script {
                         sh """
