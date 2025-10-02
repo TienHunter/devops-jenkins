@@ -21,6 +21,7 @@ def call() {
                               git fetch origin
                               git checkout local || git checkout -b local origin/local
                               git pull origin local
+                            fi
                         '''
                     }
                 }
